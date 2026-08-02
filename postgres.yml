@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: my-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: atlas
+      POSTGRES_PASSWORD: atlas123
+      POSTGRES_DB: atlas_bank
