@@ -6,6 +6,7 @@ import com.atlas.bank.transaction.model.state.RejectedState;
 import com.atlas.bank.transaction.model.state.ReversedState;
 import com.atlas.bank.transaction.model.state.TransactionState;
 import com.atlas.bank.transaction.model.state.ValidatedState;
+import com.atlas.bank.transaction.service.event.TransactionExecutedEvent;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,9 +18,11 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.domain.AbstractAggregateRoot;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -29,15 +32,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Transaction {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+public class Transaction extends AbstractAggregateRoot<Transaction> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private TransactionType type; // DEPOSIT, WITHDRAWAL, TRANSFER
+
     @Column(name = "source_account_id", nullable = false)
     private Long sourceAccountId;
 
@@ -46,11 +52,15 @@ public class Transaction {
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
+
+
     @Column(nullable = false)
     private BigDecimal fee;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private TransactionStatus status; // PENDING, EXECUTED, REJECTED
+
     @Column(name = "create_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -80,5 +90,17 @@ public class Transaction {
     public void advanceToNextState(TransactionState newState) {
         this.state = newState;
         this.status = newState.status();
+    }
+
+    public void markAsExecuted() {
+        registerEvent(new TransactionExecutedEvent(
+                id, type, sourceAccountId,
+                targetAccountId, amount, fee));
+    }
+
+    public void executedTransfer() {
+        advanceToNextState(getState().validate());
+        advanceToNextState(getState().execute());
+        markAsExecuted();
     }
 }

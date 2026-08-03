@@ -3,14 +3,14 @@ package com.atlas.bank.transaction.service.transfer;
 import com.atlas.bank.account.exception.AccountNotFoundException;
 import com.atlas.bank.account.model.Account;
 import com.atlas.bank.account.repository.AccountRepository;
+import com.atlas.bank.account.repository.DomainAccountRepository;
 import com.atlas.bank.transaction.dto.TransferRequest;
 import com.atlas.bank.transaction.model.Transaction;
 import com.atlas.bank.transaction.repository.TransactionRepository;
-import com.atlas.bank.transaction.service.event.TransactionExecutedEvent;
+import com.atlas.bank.transaction.service.domain.TransferDomainService;
 import com.atlas.bank.transaction.service.factory.TransactionFactory;
 import com.atlas.bank.transaction.service.feed.FeedCalculator;
 import com.atlas.bank.transaction.validation.chain.TransferValidator;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,18 +20,20 @@ import java.util.List;
 @Service
 public class TransferService extends TransactionProcessor<TransferContext> implements ITransferService {
 
-    private final AccountRepository accountRepository;
-    private final List<FeedCalculator> feedCalculators;
-    private final ApplicationEventPublisher publisher;
-    private final List<TransferValidator> validators;
 
-    public TransferService(TransactionRepository transactionRepository, AccountRepository accountRepository, List<FeedCalculator> feedCalculators,
-                           ApplicationEventPublisher publisher, List<TransferValidator> validators) {
-        super(transactionRepository);
-        this.accountRepository = accountRepository;
-        this.feedCalculators = feedCalculators;
-        this.publisher = publisher;
-        this.validators = validators;
+    private final DomainAccountRepository accountRepository;
+    private final List<FeedCalculator> feedCalculators;
+    private final List<TransferValidator> validators;
+    private final TransferDomainService transferDomainService;
+
+
+    public TransferService(TransactionRepository transactionRepository, DomainAccountRepository accountRepository, List<FeedCalculator> feedCalculators,
+                            List<TransferValidator> validators, TransferDomainService transferDomainService) {
+            super(transactionRepository);
+            this.accountRepository = accountRepository;
+            this.feedCalculators = feedCalculators;
+            this.validators = validators;
+        this.transferDomainService = transferDomainService;
     }
 
     @Transactional
@@ -48,13 +50,9 @@ public class TransferService extends TransactionProcessor<TransferContext> imple
         );
         Transaction process = process(transaction);
 
-        process.advanceToNextState(process.getState().validate());
-        process.advanceToNextState(process.getState().execute());
+        process.executedTransfer();
+
         transactionRepository.save(process);
-
-        publisher.publishEvent(new TransactionExecutedEvent(process.getId(), process.getType(),
-                process.getSourceAccountId(), process.getTargetAccountId(), process.getAmount(), process.getFee()));
-
         return process;
     }
 
@@ -78,11 +76,7 @@ public class TransferService extends TransactionProcessor<TransferContext> imple
 
     @Override
     protected void execute(TransferContext context, BigDecimal fee) {
-        // Actualizar saldos
-        context.from().setBalance(context.from().getBalance().subtract(context.amount()).subtract(fee));
-        context.to().setBalance(context.to().getBalance().add(context.amount()));
-        accountRepository.save(context.from());
-        accountRepository.save(context.to());
+        transferDomainService.transfer(context.from(), context.to(), context.amount(), fee);
     }
 
     @Override
