@@ -1,4 +1,12 @@
 spring:
+  ai:
+    openai:
+      api-key: ollama
+      base-url: http://127.0.0.1:11434/v1
+      connect-timeout: 60s
+      read-timeout: 120s
+      chat:
+        model: qwen3:8b
   application:
     name: atlas-bank
   datasource:
@@ -20,3 +28,9 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8181/realms/atlas-bank
+
+logging:
+  level:
+    org.springframework.ai: DEBUG
+    org.springframework.web.client.RestClient: DEBUG
+    org.springframework.http.client: DEBUG

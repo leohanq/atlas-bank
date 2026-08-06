@@ -3,6 +3,7 @@ package com.atlas.bank.infrastructure.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
 
@@ -24,12 +26,17 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authz -> authz
                     // Accounts
+                    // allow all
+                    .requestMatchers(HttpMethod.POST, "/api/v1/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/accounts").hasAuthority("ROL_ADMIN")
                     .requestMatchers(HttpMethod.GET, "/api/v1/accounts").hasAuthority("ROL_ADMIN")
                     .requestMatchers(HttpMethod.GET, "/api/v1/accounts/{id}").hasAnyAuthority("ROL_USER", "ROL_ADMIN")
                     // Transactions
                     .requestMatchers(HttpMethod.POST, "/api/v1/transactions/transfer").hasAnyAuthority("ROL_USER", "ROL_ADMIN")
                     .requestMatchers(HttpMethod.GET, "/api/v1/transactions/{id}/transactions").hasAnyAuthority("ROL_USER", "ROL_ADMIN")
+                    // AI
+                    .requestMatchers(HttpMethod.POST, "/api/v1/ai/**").permitAll()
                     // h2
                     .requestMatchers("/h2-console/**").permitAll()
                     .anyRequest().authenticated()
