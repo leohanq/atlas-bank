@@ -1,7 +1,8 @@
-package com.atlas.bank.transaction.service;
+package com.atlas.bank.application.service;
 
+import com.atlas.bank.application.port.in.GetTransactionByAccountUseCase;
+import com.atlas.bank.application.port.out.TransactionRepositoryPort;
 import com.atlas.bank.domain.model.transaction.Transaction;
-import com.atlas.bank.transaction.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,9 +10,9 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class TransactionQueryService implements ITransactionQueryService {
+public class TransactionQueryService implements GetTransactionByAccountUseCase {
 
-    private final TransactionRepository transactionRepository;
+    private final TransactionRepositoryPort transactionRepository;
 
     @Override
     public List<Transaction> getAccountById(Long accountId) {

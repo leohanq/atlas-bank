@@ -1,19 +1,16 @@
-package com.atlas.bank.transaction.validation.chain;
+package com.atlas.bank.application.validation;
 
+import com.atlas.bank.application.port.out.FraudCheckPort;
 import com.atlas.bank.domain.exception.FraudCheckException;
 import com.atlas.bank.domain.model.shared.FraudCheckResult;
-import com.atlas.bank.transaction.service.fraud.FraudChecker;
 import com.atlas.bank.domain.model.transaction.TransferContext;
+import com.atlas.bank.domain.validation.TransferValidator;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
-@Component
-@Order(3)
 @RequiredArgsConstructor
 public class FraudValidator implements TransferValidator {
 
-    private final FraudChecker fraudChecker;
+    private final FraudCheckPort fraudChecker;
 
     @Override
     public void validate(TransferContext context) {

@@ -1,81 +1,39 @@
-package com.atlas.bank.transaction.model;
+package com.atlas.bank.domain.model.transaction;
 
-import com.atlas.bank.transaction.model.state.ExecutedState;
-import com.atlas.bank.transaction.model.state.PendingState;
-import com.atlas.bank.transaction.model.state.RejectedState;
-import com.atlas.bank.transaction.model.state.ReversedState;
-import com.atlas.bank.transaction.model.state.TransactionState;
-import com.atlas.bank.transaction.model.state.ValidatedState;
-import com.atlas.bank.transaction.service.event.TransactionExecutedEvent;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Transient;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.data.domain.AbstractAggregateRoot;
+import com.atlas.bank.domain.event.TransactionExecutedEvent;
+import com.atlas.bank.domain.model.transaction.state.*;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-@Entity
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
-public class Transaction extends AbstractAggregateRoot<Transaction> {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class Transaction {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
-
-    @Column(nullable = false, length = 20)
-    @Enumerated(EnumType.STRING)
-    private TransactionType type; // DEPOSIT, WITHDRAWAL, TRANSFER
-
-    @Column(name = "source_account_id", nullable = false)
+    private TransactionType type;
     private Long sourceAccountId;
-
-    @Column(name = "target_account_id", nullable = false)
     private Long targetAccountId;
-
-    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
-
-
-    @Column(nullable = false)
     private BigDecimal fee;
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private TransactionStatus status; // PENDING, EXECUTED, REJECTED
-
-    @Column(name = "create_at", nullable = false, updatable = false)
+    private TransactionStatus status;
     private LocalDateTime createdAt;
-
-    @Transient
     private TransactionState state;
 
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        if (this.status == null) this.status = TransactionStatus.EXECUTED;
-    }
+    @Builder.Default
+    private final List<Object> domainEvents = new ArrayList<>();
 
     public TransactionState getState() {
         if (state == null) {
-            state= switch (this.status) {
+            state = switch (status) {
                 case PENDING -> new PendingState();
                 case VALIDATED -> new ValidatedState();
                 case EXECUTED -> new ExecutedState();
@@ -83,24 +41,37 @@ public class Transaction extends AbstractAggregateRoot<Transaction> {
                 case REVERSED -> new ReversedState();
             };
         }
-
         return state;
     }
 
-    public void advanceToNextState(TransactionState newState) {
-        this.state = newState;
-        this.status = newState.status();
+    public void advanceTo(TransactionState newState) {
+        state = newState;
+        status = newState.status();
     }
 
     public void markAsExecuted() {
-        registerEvent(new TransactionExecutedEvent(
+        domainEvents.add(new TransactionExecutedEvent(
                 id, type, sourceAccountId,
-                targetAccountId, amount, fee));
+                targetAccountId, amount, fee
+        ));
     }
 
-    public void executedTransfer() {
-        advanceToNextState(getState().validate());
-        advanceToNextState(getState().execute());
+    public void executeTransfer() {
+        advanceTo(getState().validate());
+        advanceTo(getState().execute());
         markAsExecuted();
+    }
+
+    public List<Object> getDomainEvents() {
+        return Collections.unmodifiableList(domainEvents);
+    }
+
+    public void clearDomainEvents() {
+        domainEvents.clear();
+    }
+
+    public void initDefaults() {
+        if (status == null) status = TransactionStatus.EXECUTED;
+        if (createdAt == null) createdAt = LocalDateTime.now();
     }
 }

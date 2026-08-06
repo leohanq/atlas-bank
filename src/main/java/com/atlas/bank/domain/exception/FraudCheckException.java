@@ -1,4 +1,4 @@
-package com.atlas.bank.transaction.exception;
+package com.atlas.bank.domain.exception;
 
 public class FraudCheckException extends RuntimeException {
     public FraudCheckException(String reason) {

@@ -1,4 +1,4 @@
-package com.atlas.bank.transaction.validation.chain;
+package com.atlas.bank.domain.validation;
 
 import com.atlas.bank.domain.model.transaction.TransferContext;
 

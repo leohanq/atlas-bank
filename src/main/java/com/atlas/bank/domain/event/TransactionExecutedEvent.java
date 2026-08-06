@@ -1,4 +1,4 @@
-package com.atlas.bank.transaction.service.event;
+package com.atlas.bank.domain.event;
 
 import com.atlas.bank.domain.model.transaction.TransactionType;
 

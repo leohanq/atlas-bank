@@ -1,11 +1,12 @@
-package com.atlas.bank.transaction.controller;
+package com.atlas.bank.infrastructure.adapter.in.rest;
 
-import com.atlas.bank.application.in.TransferMoneyUseCase;
-import com.atlas.bank.transaction.dto.TransferRequest;
-import com.atlas.bank.transaction.dto.TransferResponse;
-import com.atlas.bank.transaction.mapper.TransferMapper;
+import com.atlas.bank.application.command.TransferMoneyCommand;
+import com.atlas.bank.application.port.in.GetTransactionByAccountUseCase;
+import com.atlas.bank.application.port.in.TransferMoneyUseCase;
 import com.atlas.bank.domain.model.transaction.Transaction;
-import com.atlas.bank.application.service.ITransactionQueryService;
+import com.atlas.bank.infrastructure.adapter.in.rest.dto.TransferMapper;
+import com.atlas.bank.infrastructure.adapter.in.rest.dto.TransferRequest;
+import com.atlas.bank.infrastructure.adapter.in.rest.dto.TransferResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,20 +25,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TransactionController {
 
-    private final ITransactionQueryService transactionQueryService;
+    private final GetTransactionByAccountUseCase transactionUseCase;
     private final TransferMoneyUseCase useCase;
     private final TransferMapper transferMapper;
 
 
     @PostMapping("/transfer")
     public ResponseEntity<TransferResponse> transfer(@Valid @RequestBody TransferRequest request) {
-        Transaction transfer = useCase.execute(request);
+        TransferMoneyCommand command = TransferMoneyCommand.builder()
+                .toId(request.getToAccountId())
+                .fromId(request.getFromAccountId())
+                .amount(request.getAmount())
+                .build();
+        Transaction transfer = useCase.execute(command);
         return ResponseEntity.status(HttpStatus.CREATED).body(transferMapper.toResponse(transfer));
     }
 
     @GetMapping("/{id}/transactions")
     public ResponseEntity<List<TransferResponse>> getTransactions(@PathVariable("id") Long accountId) {
-        List<Transaction> transactions = transactionQueryService.getAccountById(accountId);
+        List<Transaction> transactions = transactionUseCase.getAccountById(accountId);
         return ResponseEntity.ok(transferMapper.toResponseList(transactions));
     }
 }

@@ -1,4 +1,4 @@
-package com.atlas.bank.application.out;
+package com.atlas.bank.application.port.out;
 
 import com.atlas.bank.domain.model.account.Account;
 

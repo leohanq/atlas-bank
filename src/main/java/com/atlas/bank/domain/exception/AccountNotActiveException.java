@@ -1,4 +1,4 @@
-package com.atlas.bank.account.exception;
+package com.atlas.bank.domain.exception;
 
 import com.atlas.bank.domain.model.account.AccountStatus;
 

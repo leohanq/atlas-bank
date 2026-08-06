@@ -1,4 +1,4 @@
-package com.atlas.bank.transaction.service.feed;
+package com.atlas.bank.domain.strategy.fee;
 
 import com.atlas.bank.domain.model.account.AccountType;
 

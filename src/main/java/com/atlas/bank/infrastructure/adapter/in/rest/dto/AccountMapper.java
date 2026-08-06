@@ -1,7 +1,5 @@
-package com.atlas.bank.account.mapper;
+package com.atlas.bank.infrastructure.adapter.in.rest.dto;
 
-import com.atlas.bank.account.dto.AccountResponse;
-import com.atlas.bank.account.dto.CreateAccountRequest;
 import com.atlas.bank.domain.model.account.Account;
 import com.atlas.bank.domain.model.shared.Currency;
 import com.atlas.bank.domain.model.shared.Email;

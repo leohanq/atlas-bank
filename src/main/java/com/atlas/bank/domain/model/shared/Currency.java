@@ -1,4 +1,4 @@
-package com.atlas.bank.shared.model;
+package com.atlas.bank.domain.model.shared;
 
 
 public enum Currency {

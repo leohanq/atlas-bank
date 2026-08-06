@@ -1,6 +1,5 @@
-package com.atlas.bank.account.dto;
+package com.atlas.bank.infrastructure.adapter.in.rest.dto;
 
-import com.atlas.bank.transaction.dto.TransferResponse;
 import lombok.Builder;
 import lombok.Data;
 

@@ -1,4 +1,4 @@
-package com.atlas.bank.transaction.model.state;
+package com.atlas.bank.domain.model.transaction.state;
 
 import com.atlas.bank.domain.model.transaction.TransactionStatus;
 

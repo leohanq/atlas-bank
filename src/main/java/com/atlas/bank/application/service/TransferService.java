@@ -1,15 +1,14 @@
-package com.atlas.bank.transaction.service.transfer;
+package com.atlas.bank.application.service;
 
+import com.atlas.bank.application.command.TransferMoneyCommand;
+import com.atlas.bank.application.port.in.TransferMoneyUseCase;
+import com.atlas.bank.application.port.out.AccountRepositoryPort;
+import com.atlas.bank.application.port.out.TransactionRepositoryPort;
 import com.atlas.bank.domain.exception.AccountNotFoundException;
 import com.atlas.bank.domain.model.account.Account;
-import com.atlas.bank.application.in.TransferMoneyUseCase;
-import com.atlas.bank.application.out.AccountRepositoryPort;
-import com.atlas.bank.domain.model.transaction.TransferContext;
-import com.atlas.bank.transaction.dto.TransferRequest;
 import com.atlas.bank.domain.model.transaction.Transaction;
-import com.atlas.bank.transaction.repository.TransactionRepository;
+import com.atlas.bank.domain.model.transaction.TransferContext;
 import com.atlas.bank.domain.service.TransferDomainService;
-import com.atlas.bank.transaction.service.factory.TransactionFactory;
 import com.atlas.bank.domain.strategy.fee.FeedCalculator;
 import com.atlas.bank.domain.validation.TransferValidator;
 import org.springframework.stereotype.Service;
@@ -28,8 +27,8 @@ public class TransferService extends TransactionProcessor<TransferContext> imple
     private final TransferDomainService transferDomainService;
 
 
-    public TransferService(TransactionRepository transactionRepository, AccountRepositoryPort accountRepository, List<FeedCalculator> feedCalculators,
-                            List<TransferValidator> validators, TransferDomainService transferDomainService) {
+    public TransferService(TransactionRepositoryPort transactionRepository, AccountRepositoryPort accountRepository, List<FeedCalculator> feedCalculators,
+                           List<TransferValidator> validators, TransferDomainService transferDomainService) {
             super(transactionRepository);
             this.accountRepository = accountRepository;
             this.feedCalculators = feedCalculators;
@@ -39,22 +38,19 @@ public class TransferService extends TransactionProcessor<TransferContext> imple
 
     @Transactional
     @Override
-    public Transaction execute(TransferRequest request) {
+    public Transaction execute(TransferMoneyCommand command) {
         // Buscar cuentas
-        Account from = accountRepository.findById(request.getFromAccountId())
-                .orElseThrow(() -> new AccountNotFoundException(request.getFromAccountId()));
-        Account to = accountRepository.findById(request.getToAccountId())
-                .orElseThrow(() -> new AccountNotFoundException(request.getToAccountId()));
+        Account from = accountRepository.findById(command.fromId())
+                .orElseThrow(() -> new AccountNotFoundException(command.fromId()));
+        Account to = accountRepository.findById(command.toId())
+                .orElseThrow(() -> new AccountNotFoundException(command.toId()));
 
-        TransferContext transaction = new TransferContext(from, to,
-                request.getAmount()
-        );
-        Transaction process = process(transaction);
+        Transaction transaction = process(new TransferContext(from, to, command.amount()));
 
-        process.executeTransfer();
+        transaction.executeTransfer();
 
-        transactionRepository.save(process);
-        return process;
+        transactionRepository.save(transaction);
+        return transaction;
     }
 
     @Override
