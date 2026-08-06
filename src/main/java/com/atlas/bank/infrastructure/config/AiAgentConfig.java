@@ -11,7 +11,7 @@ public class AiAgentConfig {
     @Bean
     public ChatClient chatClient(ChatClient.Builder builder, AtlasBankTools atlasBankTools) {
         return builder.
-                defaultSystem("/no_think You are a helpful assistant for Atlas Bank. You can help users transfer money between accounts and get account details.")
+                defaultSystem("You are a helpful assistant for Atlas Bank. You can help users transfer money between accounts and get account details.")
                 .defaultTools(atlasBankTools)
                 .build();
     }

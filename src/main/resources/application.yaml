@@ -1,12 +1,14 @@
 spring:
   ai:
-    openai:
-      api-key: ollama
-      base-url: http://127.0.0.1:11434/v1
-      connect-timeout: 60s
-      read-timeout: 120s
-      chat:
-        model: qwen3:8b
+    bedrock:
+      aws:
+        region: us-east-1
+        profile:
+          name: twdc-bedrock-central
+      converse:
+        chat:
+          options:
+            model: us.anthropic.claude-sonnet-4-20250514-v1:0
   application:
     name: atlas-bank
   datasource:
